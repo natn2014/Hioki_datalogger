@@ -33,22 +33,14 @@ install_service() {
         exit 1
     fi
     
-    # Update paths in service file based on current installation
+    # Copy service file to systemd
     echo -e "${BLUE}Copying service file to systemd...${NC}"
     cp "$SCRIPT_DIR/hioki-meter.service" "$SERVICE_FILE"
     
     # Set correct permissions
     chmod 644 "$SERVICE_FILE"
     
-    # Create virtual environment if not exists
-    if [ ! -d "$APP_DIR/venv" ]; then
-        echo -e "${BLUE}Creating Python virtual environment...${NC}"
-        cd "$APP_DIR"
-        python3 -m venv venv
-        source venv/bin/activate
-        pip install -q -r requirements.txt
-        deactivate
-    fi
+    # Note: Using global Python installation (no venv needed)
     
     # Reload systemd daemon
     echo -e "${BLUE}Reloading systemd daemon...${NC}"
