@@ -1,0 +1,29 @@
+[Unit]
+Description=HIOKI Resistance Meter
+Documentation=file:///home/pi/hioki_meter/SETUP_AND_DEPLOYMENT.md
+After=network.target
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/hioki_meter
+Environment="PATH=/home/pi/hioki_meter/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+ExecStart=/home/pi/hioki_meter/venv/bin/python /home/pi/hioki_meter/main.py
+
+# Auto-restart if crashes
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=hioki-meter
+
+# Resource limits
+MemoryLimit=256M
+CPUQuota=50%
+
+[Install]
+WantedBy=multi-user.target
