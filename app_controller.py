@@ -1,8 +1,8 @@
 # coding: UTF-8
 
-from PySide2.QtWidgets import QDialog, QApplication, QMessageBox, QListWidgetItem, QComboBox, QPushButton, QHBoxLayout
-from PySide2.QtCore import QTimer, Qt, QScreen
-from PySide2.QtGui import QColor, QFont
+from PySide2.QtWidgets import QDialog, QApplication, QMessageBox, QComboBox, QPushButton, QHBoxLayout
+from PySide2.QtCore import QTimer, Qt
+from PySide2.QtGui import QColor, QFont, QScreen, QStandardItemModel, QStandardItem
 import sys
 import os
 import time
@@ -40,6 +40,10 @@ class HiokiResistanceApp(QDialog):
         self.auto_reconnect_enabled = False
         self.reconnect_timer = QTimer()
         self.reconnect_timer.timeout.connect(self._on_reconnect_timer)
+
+        # Setup logger model for QListView using QStandardItemModel
+        self.log_model = QStandardItemModel()
+        self.ui.listView_logger.setModel(self.log_model)
 
         # Add port selection and connect button programmatically to status group
         self._add_port_controls()
@@ -83,8 +87,8 @@ class HiokiResistanceApp(QDialog):
         # Initial status - use existing label
         self._update_status_label("Disconnected", "Not connected")
 
-        # Setup logger
-        self.ui.listView_logger.itemSelectionChanged.connect(self._on_log_item_selected)
+        # Setup logger (no signal handler needed for simple display)
+        # Removed itemSelectionChanged as it's not needed
 
     def _apply_responsive_scaling(self):
         """
@@ -199,10 +203,6 @@ class HiokiResistanceApp(QDialog):
             )
         else:
             QMessageBox.warning(self, "Not Connected", "Device is not connected.")
-
-    def _on_log_item_selected(self):
-        """Handle log item selection."""
-        pass  # Just for UI interaction, no special action needed
 
     def connect_device(self):
         """Public method to connect to device (called from external button if needed)."""
@@ -369,27 +369,13 @@ class HiokiResistanceApp(QDialog):
         Args:
             message (str): Message to log
         """
-        timestamp = datetime.now().strftime("%H:%M:%S")
-        log_entry = f"{message}"
-
-        item = QListWidgetItem(log_entry)
-
-        # Color code by message type
-        if "[ERROR]" in message or "[ALERT]" in message:
-            item.setForeground(QColor("#FF4444"))  # Red
-        elif "[WARN]" in message:
-            item.setForeground(QColor("#FFAA00"))  # Orange
-        elif "[SUCCESS]" in message or "[FOUND]" in message:
-            item.setForeground(QColor("#00AA00"))  # Green
-        elif "[INFO]" in message or "[CONNECT]" in message:
-            item.setForeground(QColor("#4488FF"))  # Blue
-        else:
-            item.setForeground(QColor("#FFFFFF"))  # White
-
-        self.ui.listView_logger.addItem(item)
-
+        # Add to model as QStandardItem
+        item = QStandardItem(message)
+        self.log_model.appendRow(item)
+        
         # Auto-scroll to latest
-        self.ui.listView_logger.scrollToItem(item)
+        last_index = self.log_model.index(self.log_model.rowCount() - 1)
+        self.ui.listView_logger.scrollTo(last_index)
 
     def _insert_to_database(self, value, status):
         """
